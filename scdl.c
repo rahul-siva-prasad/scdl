@@ -6,13 +6,13 @@
 #include "scdl_time.h"
 
 static const char* const s_debugLevel[MAX_LEVEL] = 	{
-                                            			"NOTSET  ",
-                                            			"DEBUG   ",
-                                            			"INFO    ",
-                                            			"WARN    ",
-                                            			"ERROR   ",
-                                            			"CRITICAL"
-                                        			};
+                                                        "NOTSET  ",
+                                                        "DEBUG   ",
+                                                        "INFO    ",
+                                                        "WARN    ",
+                                                        "ERROR   ",
+                                                        "CRITICAL"
+                                                    };
 
 typedef struct 
 {
@@ -36,18 +36,18 @@ void unlockMutex(SimpleMutex* mutex)
  */
 static void __openLogFile(LoggerContext* ctx) 
 {
-	if (!ctx->filePtr) 
-	{
-		fopen_s(&ctx->filePtr, ctx->debugLogFile, "a+");
-		if (!ctx->filePtr) 
-		{
-			printf("Failed to open debug log file.\n");
-		}
-		else
-		{
-			fprintf(ctx->filePtr, "========================================================DEBUG========================================================\n");
-		}
-	}
+    if (!ctx->filePtr) 
+    {
+        fopen_s(&ctx->filePtr, ctx->debugLogFile, "a+");
+        if (!ctx->filePtr) 
+        {
+            printf("Failed to open debug log file.\n");
+        }
+        else
+        {
+            fprintf(ctx->filePtr, "========================================================DEBUG========================================================\n");
+        }
+    }
 }
 
 /**
@@ -59,53 +59,53 @@ static void __openLogFile(LoggerContext* ctx)
  */
 void __f_logMessage(LoggerContext* ctx,DEBUG_LEVEL debugLevel,int debugLineNumber, const char* debugFunctionName,const char* format,...)
 {	
-	lockMutex(&logMutex);
-	__openLogFile(ctx);
-	if (ctx->filePtr)
-	{
-		fprintf(ctx->filePtr,"%s : %s : Line == %u : Function Name == %s : Message == ",getTime(),
-																				s_debugLevel[debugLevel],
-																				debugLineNumber,
-																				debugFunctionName);
-	}
-	printf("%s : %s : Line == %u : Function Name == %s : Message == ",	getTime(),
-																		s_debugLevel[debugLevel],
-																		debugLineNumber,
-																		debugFunctionName);
-	va_list args;
-	va_start(args, format);
+    lockMutex(&logMutex);
+    __openLogFile(ctx);
+    if (ctx->filePtr)
+    {
+        fprintf(ctx->filePtr,"%s : %s : Line == %u : Function Name == %s : Message == ",getTime(),
+                                                                                s_debugLevel[debugLevel],
+                                                                                debugLineNumber,
+                                                                                debugFunctionName);
+    }
+    printf("%s : %s : Line == %u : Function Name == %s : Message == ",	getTime(),
+                                                                        s_debugLevel[debugLevel],
+                                                                        debugLineNumber,
+                                                                        debugFunctionName);
+    va_list args;
+    va_start(args, format);
 
-	if (ctx->filePtr) {
-		vfprintf(ctx->filePtr, format, args);
-		fprintf(ctx->filePtr, "\n");
-		fflush(ctx->filePtr);
-	}
-	
+    if (ctx->filePtr) {
+        vfprintf(ctx->filePtr, format, args);
+        fprintf(ctx->filePtr, "\n");
+        fflush(ctx->filePtr);
+    }
+    
     vprintf(format, args);
-	printf("\n");
+    printf("\n");
 
-	va_end(args);
-	unlockMutex(&logMutex);
+    va_end(args);
+    unlockMutex(&logMutex);
 }
 
 void scdl_closeLogger(LoggerContext* ctx)
 {
-	if (ctx->filePtr) 
-	{
-		fclose(ctx->filePtr);
-		ctx->filePtr = NULL;
-	}
+    if (ctx->filePtr) 
+    {
+        fclose(ctx->filePtr);
+        ctx->filePtr = NULL;
+    }
 }
 
 int main()
 {	
-	LoggerContext ctx = {NULL,"debug.log",NOTSET};
-	LoggerContext ctx2 = {NULL,"de2.log",NOTSET};
+    LoggerContext ctx = {NULL,"debug.log",NOTSET};
+    LoggerContext ctx2 = {NULL,"de2.log",NOTSET};
 
     LOG_MESSAGE(&ctx,CRITICAL, "Test %d", 10);
     LOG_MESSAGE(&ctx2,INFO, "Test NOOO");
 
-	scdl_closeLogger(&ctx);
-	scdl_closeLogger(&ctx2);
+    scdl_closeLogger(&ctx);
+    scdl_closeLogger(&ctx2);
     return 0;
 }
