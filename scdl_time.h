@@ -3,6 +3,6 @@
 
 #include <time.h>
 
-char* getTime(void);
+char* __scdl_getTime(void);
 
 #endif

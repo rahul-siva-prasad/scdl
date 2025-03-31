@@ -1,6 +1,6 @@
 #include "scdl_time.h"
 
-char* getTime(void) 
+char* __scdl_getTime(void) 
 {
     static char time_buffer[25];
     time_t rawtime;

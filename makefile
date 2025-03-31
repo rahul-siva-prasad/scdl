@@ -29,7 +29,7 @@ endif
 all : build
 
 # Build target: compiles object files and creates the DLL
-build : $(OBJ) shared_lib
+build : shared_lib
 
 # Rule to compile source files into object files
 $(CACHE_FOLDER)/%.o: %.c

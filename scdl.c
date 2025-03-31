@@ -57,8 +57,8 @@ static void __openLogFile(LoggerContext* ctx)
  * @param[in] debugFunctionName Function wherein the debug call is triggered
  * @param[in] format Message to log
  */
-void __f_logMessage(LoggerContext* ctx,DEBUG_LEVEL debugLevel,int debugLineNumber, const char* debugFunctionName,const char* format,...)
-{	
+void __f_logMessage(LoggerContext* ctx,const char* const ctx_string,DEBUG_LEVEL debugLevel,int debugLineNumber, const char* debugFunctionName,const char* format,...)
+{
     __lockMutex(&logMutex);
 
     const char* const s_debugLevel[MAX_LEVEL] = {   "NOTSET  ",
@@ -76,15 +76,17 @@ void __f_logMessage(LoggerContext* ctx,DEBUG_LEVEL debugLevel,int debugLineNumbe
     __openLogFile(ctx);
     if (ctx->filePtr)
     {
-        fprintf(ctx->filePtr,"%s : %s : Line == %u : Function Name == %s : Message == ",getTime(),
-                                                                                s_debugLevel[debugLevel],
-                                                                                debugLineNumber,
-                                                                                debugFunctionName);
+        fprintf(ctx->filePtr,"%s : %s : Line == %u : LoggerName == %s : Function Name == %s : Message == ", __scdl_getTime(),
+                                                                                                            s_debugLevel[debugLevel],
+                                                                                                            debugLineNumber,
+                                                                                                            ctx_string,
+                                                                                                            debugFunctionName);
     }
-    printf("%s : %s : Line == %u : Function Name == %s : Message == ",	getTime(),
-                                                                        s_debugLevel[debugLevel],
-                                                                        debugLineNumber,
-                                                                        debugFunctionName);
+    printf("%s : %s : Line == %u : LoggerName == %s : Function Name == %s : Message == ",	__scdl_getTime(),
+                                                                                            s_debugLevel[debugLevel],
+                                                                                            debugLineNumber,
+                                                                                            ctx_string,
+                                                                                            debugFunctionName);
     va_list args;
     va_start(args, format);
 

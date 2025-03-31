@@ -26,10 +26,10 @@
         DEBUG_LEVEL debugLevel;
     }LoggerContext;
     
-    __SCDL_API__ void __f_logMessage(LoggerContext* ctx,DEBUG_LEVEL debugLevel,int debugLineNumber, const char* debugFunctionName,const char* format,...);
+    __SCDL_API__ void __f_logMessage(LoggerContext* ctx,const char* const ctx_string,DEBUG_LEVEL debugLevel,int debugLineNumber, const char* debugFunctionName,const char* format,...);
     __SCDL_API__ LoggerContext scdl_createLogger(const char* const debugFileName,const DEBUG_LEVEL debugLevel);
     __SCDL_API__ void scdl_closeLogger(LoggerContext* ctx);
 
-    #define LOG(ctx_p,severityLevel,fmt,...)    __f_logMessage(ctx_p, severityLevel, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__);
+    #define LOG(ctx_p,severityLevel,fmt,...)    __f_logMessage(&ctx_p, #ctx_p,severityLevel, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__);
 
 #endif
