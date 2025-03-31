@@ -3,3 +3,4 @@ makeCache/
 
 *.exe
 *.dll
+*.log

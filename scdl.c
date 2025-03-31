@@ -5,15 +5,6 @@
 #include "scdl.h"
 #include "scdl_time.h"
 
-static const char* const s_debugLevel[MAX_LEVEL] = 	{
-                                                        "NOTSET  ",
-                                                        "DEBUG   ",
-                                                        "INFO    ",
-                                                        "WARN    ",
-                                                        "ERROR   ",
-                                                        "CRITICAL"
-                                                    };
-
 typedef struct 
 {
     volatile int locked;
@@ -21,24 +12,33 @@ typedef struct
 
 static SimpleMutex logMutex={0};
 
-void lockMutex(SimpleMutex* mutex) 
+/**
+ * @brief Locks mutex object, Spinlock
+ * @param[in] mutex SimpleMutex object
+ */
+void __lockMutex(SimpleMutex* mutex) 
 {
     while (__sync_lock_test_and_set(&mutex->locked, 1));
 }
 
-void unlockMutex(SimpleMutex* mutex) 
+/**
+ *  @brief Unlocks mutex object
+ *  @param[in] mutex SimpleMutex object
+ */
+void __unlockMutex(SimpleMutex* mutex) 
 {
     __sync_lock_release(&mutex->locked);
 }
 
 /**
  * @brief Opens Log File if not done already (Lazy Open)
+ * @param[in] ctx Pointer to LoggerContext
  */
 static void __openLogFile(LoggerContext* ctx) 
 {
     if (!ctx->filePtr) 
     {
-        fopen_s(&ctx->filePtr, ctx->debugLogFile, "a+");
+        ctx->filePtr = fopen(ctx->debugLogFile, "a+");
         if (!ctx->filePtr) 
         {
             printf("Failed to open debug log file.\n");
@@ -52,14 +52,27 @@ static void __openLogFile(LoggerContext* ctx)
 
 /**
  * @brief Prints debug information (prints on console if log file doesn't open)
- * @param e_debugLevel Debug Level/Severity
- * @param debugLineNumber Line where the debug call is triggered
- * @param debugFunctionName Function wherein the debug call is triggered
- * @param format Message to log
+ * @param[in] e_debugLevel Debug Level/Severity
+ * @param[in] debugLineNumber Line where the debug call is triggered
+ * @param[in] debugFunctionName Function wherein the debug call is triggered
+ * @param[in] format Message to log
  */
 void __f_logMessage(LoggerContext* ctx,DEBUG_LEVEL debugLevel,int debugLineNumber, const char* debugFunctionName,const char* format,...)
 {	
-    lockMutex(&logMutex);
+    __lockMutex(&logMutex);
+
+    const char* const s_debugLevel[MAX_LEVEL] = {   "NOTSET  ",
+                                                    "DEBUG   ",
+                                                    "INFO    ",
+                                                    "WARN    ",
+                                                    "ERROR   ",
+                                                    "CRITICAL"  };
+    
+    if(debugLevel < ctx->debugLevel)
+    {
+        __unlockMutex(&logMutex);
+        return;
+    }
     __openLogFile(ctx);
     if (ctx->filePtr)
     {
@@ -75,7 +88,8 @@ void __f_logMessage(LoggerContext* ctx,DEBUG_LEVEL debugLevel,int debugLineNumbe
     va_list args;
     va_start(args, format);
 
-    if (ctx->filePtr) {
+    if (ctx->filePtr)
+    {
         vfprintf(ctx->filePtr, format, args);
         fprintf(ctx->filePtr, "\n");
         fflush(ctx->filePtr);
@@ -85,9 +99,13 @@ void __f_logMessage(LoggerContext* ctx,DEBUG_LEVEL debugLevel,int debugLineNumbe
     printf("\n");
 
     va_end(args);
-    unlockMutex(&logMutex);
+    __unlockMutex(&logMutex);
 }
 
+/**
+ * @brief API called at end to close debug context
+ * @param[in] ctx Pointer to LoggerContext
+ */
 void scdl_closeLogger(LoggerContext* ctx)
 {
     if (ctx->filePtr) 
@@ -97,15 +115,19 @@ void scdl_closeLogger(LoggerContext* ctx)
     }
 }
 
-int main()
-{	
-    LoggerContext ctx = {NULL,"debug.log",NOTSET};
-    LoggerContext ctx2 = {NULL,"de2.log",NOTSET};
 
-    LOG_MESSAGE(&ctx,CRITICAL, "Test %d", 10);
-    LOG_MESSAGE(&ctx2,INFO, "Test NOOO");
-
-    scdl_closeLogger(&ctx);
-    scdl_closeLogger(&ctx2);
-    return 0;
+/**
+ * @brief API called to create a debug context
+ * @param[in] debugFileName Filename for debug log
+ * @param[in] debugLevel Debug level above which log is active
+ * @param[out] LoggerContext Returns LoggerContext *shallow copy*
+ */
+LoggerContext scdl_createLogger(const char* debugFileName,const DEBUG_LEVEL debugLevel)
+{
+    if(debugFileName == NULL)
+    {
+        debugFileName = "debug.log"; //string literal stored in read-only section, not bound to function scope
+    }
+    LoggerContext ctx = {.filePtr = NULL, .debugLogFile = debugFileName, .debugLevel = debugLevel};
+    return ctx;
 }
